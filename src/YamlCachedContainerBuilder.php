@@ -43,7 +43,8 @@ class YamlCachedContainerBuilder
      */
     public function build($configDir, $configFile, $className = 'CachedContainer', $namespace = '')
     {
-        $fqClassName = '\\' . $namespace . '\\' . $className;
+        $cleanNamespace = self::cleanNamespace($namespace);
+        $fqClassName = (isEmpty($cleanNamespace) ? '' : '\\' . $cleanNamespace) . '\\' . $className;
         $cacheFile = $this->cacheDir . '/' . $className . '.php';
         $configCache = new ConfigCache($cacheFile, $this->debug);
 
@@ -58,11 +59,35 @@ class YamlCachedContainerBuilder
 
             $dumper = new PhpDumper($containerBuilder);
             $configCache->write(
-                $dumper->dump(array('class' => $className, 'namespace' => $namespace)),
+                $dumper->dump(['class' => $className, 'namespace' => $namespace]),
                 $containerBuilder->getResources()
             );
         }
 
         return new $fqClassName();
+    }
+
+    /**
+     * Format the namespace to avoid any problem.
+     *
+     * @param $namespace
+     *
+     * @return string
+     */
+    private static function cleanNamespace($namespace)
+    {
+        $cleanNamespace = $namespace;
+
+        // if namespace begins with \ we trim it
+        if (strrpos($cleanNamespace, '\\') === 0) {
+            $cleanNamespace = substr($cleanNamespace, 1, strlen($cleanNamespace)-1);
+        }
+
+        // if namespace is ending with \ we trim it
+        if (strrpos($cleanNamespace, '\\') === strlen($cleanNamespace)-1) {
+            $cleanNamespace = substr($cleanNamespace, 0, strlen($cleanNamespace)-1);
+        }
+
+        return $cleanNamespace;
     }
 }
