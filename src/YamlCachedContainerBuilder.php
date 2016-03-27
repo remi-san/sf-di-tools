@@ -41,10 +41,12 @@ class YamlCachedContainerBuilder
      *
      * @return Container
      */
-    public function build($configDir, $configFile, $className = 'CachedContainer', $namespace = '')
+    public function build($configDir, $configFile, $className = 'CachedContainer', $namespace = 'Cache')
     {
-        $cleanNamespace = self::cleanNamespace($namespace);
-        $fqClassName = (isEmpty($cleanNamespace) ? '' : '\\' . $cleanNamespace) . '\\' . $className;
+        self::checkNamespace($namespace);
+        self::checkClassName($className);
+
+        $fqClassName = '\\' . $namespace . '\\' . $className;
         $cacheFile = $this->cacheDir . '/' . $className . '.php';
         $configCache = new ConfigCache($cacheFile, $this->debug);
 
@@ -74,20 +76,50 @@ class YamlCachedContainerBuilder
      *
      * @return string
      */
-    private static function cleanNamespace($namespace)
+    private static function checkNamespace($namespace)
     {
-        $cleanNamespace = $namespace;
-
-        // if namespace begins with \ we trim it
-        if (strrpos($cleanNamespace, '\\') === 0) {
-            $cleanNamespace = substr($cleanNamespace, 1, strlen($cleanNamespace)-1);
+        if (isEmpty($namespace)) {
+            throw new \InvalidArgumentException('Namespace cannot be empty');
         }
 
-        // if namespace is ending with \ we trim it
-        if (strrpos($cleanNamespace, '\\') === strlen($cleanNamespace)-1) {
-            $cleanNamespace = substr($cleanNamespace, 0, strlen($cleanNamespace)-1);
+        // if namespace begins with \
+        if (strrpos($namespace, '\\') === 0) {
+            throw new \InvalidArgumentException(sprintf('Namespace "%s" cannot begin with \\', $namespace));
         }
 
-        return $cleanNamespace;
+        // if namespace is ending with \
+        if (strrpos($namespace, '\\') === strlen($namespace) - 1) {
+            throw new \InvalidArgumentException(sprintf('Namespace "%s" cannot end with \\', $namespace));
+        }
+
+        // check if each part of the namespace is valid
+        $parts = explode('\\', $namespace);
+        foreach ($parts as $part) {
+            if (!self::isNameValid($part)) {
+                throw new \InvalidArgumentException(
+                    sprintf('Invalid namespace part : "%s" for "%s"', $part, $namespace)
+                );
+            }
+        }
+    }
+
+    /**
+     * @param $className
+     */
+    private static function checkClassName($className)
+    {
+        if (!self::isNameValid($className)) {
+            throw new \InvalidArgumentException(sprintf('Class name "%" is not valid', $className));
+        }
+    }
+
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
+    private static function isNameValid($name)
+    {
+        return preg_match('^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$', $name) === 1;
     }
 }
