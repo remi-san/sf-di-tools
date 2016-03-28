@@ -43,8 +43,10 @@ class YamlCachedContainerBuilder
      */
     public function build($configDir, $configFile, $className = 'CachedContainer', $namespace = 'Cache')
     {
-        self::checkNamespace($namespace);
-        self::checkClassName($className);
+        if ($this->debug) { // provides useful info regarding namespace when in debug, ignored in prod for performance
+            self::checkNamespace($namespace);
+            self::checkClassName($className);
+        }
 
         $fqClassName = '\\' . $namespace . '\\' . $className;
         $cacheFile = $this->cacheDir . '/' . $className . '.php';
@@ -78,17 +80,15 @@ class YamlCachedContainerBuilder
      */
     private static function checkNamespace($namespace)
     {
-        if (isEmpty($namespace)) {
+        if (empty($namespace)) {
             throw new \InvalidArgumentException('Namespace cannot be empty');
         }
 
-        // if namespace begins with \
-        if (strrpos($namespace, '\\') === 0) {
+        if (strrpos($namespace, '\\') === 0) { // if namespace begins with \
             throw new \InvalidArgumentException(sprintf('Namespace "%s" cannot begin with \\', $namespace));
         }
 
-        // if namespace is ending with \
-        if (strrpos($namespace, '\\') === strlen($namespace) - 1) {
+        if (strrpos($namespace, '\\') === strlen($namespace) - 1) { // if namespace is ending with \
             throw new \InvalidArgumentException(sprintf('Namespace "%s" cannot end with \\', $namespace));
         }
 
@@ -120,6 +120,7 @@ class YamlCachedContainerBuilder
      */
     private static function isNameValid($name)
     {
-        return preg_match('^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$', $name) === 1;
+        return preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $name, $matches) === 1 &&
+            count($matches) === 1 && $matches[0] === $name;
     }
 }

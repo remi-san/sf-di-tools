@@ -1,6 +1,7 @@
 {
     "name": "remi-san/sf-di-tools",
     "description" : "A set of tools for symfony DI",
+    "license" : "MIT",
     "keywords": [
         "Symfony Dependency Injection",
         "Tools"
@@ -31,7 +32,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Symfony\\Component\\DependencyInjection\\Test\\": "tests/unit"
+            "Symfony\\Component\\DependencyInjection\\Test\\": "tests/unit",
+            "Cache\\": "tests/unit/cache"
         }
     }
 }
